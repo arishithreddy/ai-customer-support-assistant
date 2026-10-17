@@ -1,0 +1,16 @@
+ticket_id,customer_id,order_id,ticket_category,ticket_priority,ticket_status,ticket_subject,ticket_created_at,ticket_resolved_at,assigned_team
+TICK001,CUST001,ORD001,Product Issue,High,Resolved,Smartphone stopped working,2026-10-01,2026-10-04,Technical Support
+TICK002,CUST002,ORD002,Shipping,Medium,Open,Package delivery delayed,2026-10-12,,Shipping Support
+TICK003,CUST003,ORD003,Returns,Medium,Resolved,Requesting return for laptop,2026-09-05,2026-09-08,Returns Team
+TICK004,CUST004,ORD004,Refund,High,Resolved,Refund not received after cancellation,2026-10-04,2026-10-07,Finance Support
+TICK005,CUST005,ORD005,Damaged Item,Critical,Escalated,Monitor arrived damaged,2026-07-13,,Escalation Team
+TICK006,CUST006,ORD006,Cancellation,Medium,Open,Request to cancel processing order,2026-10-15,,Order Management
+TICK007,CUST007,ORD007,Product Issue,Low,Resolved,Charging hub not working properly,2026-10-01,2026-10-03,Technical Support
+TICK008,CUST008,ORD008,Billing,High,Resolved,Duplicate payment charged,2026-06-20,2026-06-23,Finance Support
+TICK009,CUST009,ORD009,Shipping,Medium,Open,Tracking information has not updated,2026-10-13,,Shipping Support
+TICK010,CUST010,ORD010,Returns,Medium,Resolved,Return status inquiry,2026-09-12,2026-09-15,Returns Team
+TICK011,CUST001,ORD011,Product Issue,Low,Resolved,Wireless mouse connection issue,2026-08-12,2026-08-14,Technical Support
+TICK012,CUST003,ORD012,Returns,High,Escalated,Laptop return request after warranty concern,2026-09-10,,Escalation Team
+TICK013,CUST005,ORD013,Shipping,Medium,Open,Laptop shipment delayed,2026-10-14,,Shipping Support
+TICK014,CUST009,ORD014,Cancellation,High,Open,Request cancellation before shipment,2026-10-15,,Order Management
+TICK015,CUST002,ORD015,Product Issue,Low,Resolved,Charging hub compatibility question,2026-09-21,2026-09-22,Technical Support

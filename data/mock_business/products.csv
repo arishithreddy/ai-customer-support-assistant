@@ -1,0 +1,11 @@
+product_id,product_name,category,warranty_months,returnable,is_digital,price
+PROD001,Smartphone X1,Electronics,12,true,false,699.99
+PROD002,Wireless Headphones Pro,Audio,12,true,false,149.99
+PROD003,UltraBook 14,Laptops,24,true,false,1299.99
+PROD004,Smartwatch Active,Wearables,12,true,false,249.99
+PROD005,4K Smart Monitor,Monitors,24,true,false,449.99
+PROD006,USB-C Charging Hub,Accessories,6,true,false,59.99
+PROD007,Mechanical Keyboard,Accessories,12,true,false,99.99
+PROD008,Cloud Storage Premium,Software,12,false,true,79.99
+PROD009,Office Productivity Suite,Software,12,false,true,119.99
+PROD010,Wireless Mouse,Accessories,12,true,false,39.99

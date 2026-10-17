@@ -1,0 +1,11 @@
+customer_id,customer_name,customer_tier,account_status,country,created_at
+CUST001,Arjun Mehta,Premium,Active,India,2023-01-15
+CUST002,Sophia Williams,Standard,Active,United States,2023-03-22
+CUST003,Liam Johnson,Premium,Active,United Kingdom,2022-11-08
+CUST004,Emma Brown,Standard,Inactive,Canada,2024-02-17
+CUST005,Noah Garcia,Enterprise,Active,United States,2022-07-30
+CUST006,Olivia Martinez,Premium,Suspended,Spain,2023-09-12
+CUST007,Ethan Wilson,Standard,Active,Australia,2024-01-05
+CUST008,Ava Anderson,Enterprise,Active,Germany,2022-05-19
+CUST009,Rahul Sharma,Premium,Active,India,2023-06-27
+CUST010,Mia Thompson,Standard,Inactive,France,2024-04-11

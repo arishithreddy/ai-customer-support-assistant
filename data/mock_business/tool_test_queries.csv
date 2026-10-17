@@ -1,0 +1,21 @@
+query_id,customer_id,query_type,user_query,expected_tool,expected_result
+TSQ001,CUST001,Customer Lookup,What is my account status?,customer_lookup,CUST001 is Active
+TSQ002,CUST002,Customer Lookup,What customer tier am I on?,customer_lookup,CUST002 is Standard
+TSQ003,CUST003,Order Lookup,What is the status of my order ORD003?,order_lookup,ORD003 is Delivered
+TSQ004,CUST009,Order Lookup,Where is my order ORD009?,order_lookup,ORD009 is Shipped and In Transit
+TSQ005,CUST004,Order Lookup,Was my order ORD004 cancelled?,order_lookup,ORD004 is Cancelled
+TSQ006,CUST001,Order History,Show me my recent orders,order_history,Return orders associated with CUST001
+TSQ007,CUST009,Order History,What orders have I placed?,order_history,Return orders associated with CUST009
+TSQ008,CUST004,Refund Lookup,Has my refund for ORD004 been completed?,refund_lookup,Refund REF001 is Completed
+TSQ009,CUST002,Refund Lookup,What is the status of my refund for ORD002?,refund_lookup,Refund REF003 is Pending
+TSQ010,CUST009,Refund Lookup,Do I have any pending refunds?,refund_lookup,Return pending refunds associated with CUST009
+TSQ011,CUST005,Support Ticket Lookup,What is the status of my support ticket TICK005?,support_ticket_lookup,TICK005 is Escalated
+TSQ012,CUST009,Support Ticket Lookup,Do I have any open support tickets?,support_ticket_lookup,Return open tickets associated with CUST009
+TSQ013,CUST006,Support Ticket Lookup,Who is handling my cancellation request?,support_ticket_lookup,Order Management is assigned to TICK006
+TSQ014,CUST001,Product Lookup,What product did I purchase in ORD001?,product_lookup,ORD001 contains PROD001 Smartphone X1
+TSQ015,CUST003,Product Lookup,How long is the warranty on my product in ORD003?,product_lookup,PROD003 has a 24 month warranty
+TSQ016,CUST008,Product Lookup,Is the product in ORD008 returnable?,product_lookup,PROD008 is not returnable
+TSQ017,CUST005,Customer Orders,How much did I pay for ORD005?,order_lookup,ORD005 total amount is 449.99
+TSQ018,CUST009,Refund Lookup,How much money am I waiting to receive?,refund_lookup,Return the total amount of pending refunds for CUST009
+TSQ019,CUST001,Support Ticket Lookup,How many support tickets have I raised?,support_ticket_lookup,Return the number of tickets associated with CUST001
+TSQ020,CUST010,Customer Lookup,Is my account currently active?,customer_lookup,CUST010 is Inactive
