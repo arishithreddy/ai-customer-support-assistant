@@ -1,3 +1,13 @@
+---
+doc_id: support_escalation_policy
+title: Support Escalation Policy
+access_level: internal
+department: customer_support
+owner: support-operations
+version: "1.0"
+last_reviewed: "2026-01-15"
+---
+
 # Support Escalation Policy
 
 ## Purpose

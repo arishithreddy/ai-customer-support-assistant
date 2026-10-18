@@ -1,3 +1,13 @@
+---
+doc_id: product_troubleshooting_guide
+title: Product Troubleshooting Guide
+access_level: public
+department: technical_support
+owner: tech-support-team
+version: "1.0"
+last_reviewed: "2026-01-15"
+---
+
 # Product Troubleshooting Guide
 
 ## Purpose

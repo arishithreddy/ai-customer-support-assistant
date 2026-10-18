@@ -1,3 +1,13 @@
+---
+doc_id: order_cancellation_policy
+title: Order Cancellation Policy
+access_level: public
+department: customer_support
+owner: support-content-team
+version: "1.0"
+last_reviewed: "2026-01-15"
+---
+
 # Order Cancellation Policy
 
 ## Overview

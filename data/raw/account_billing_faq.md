@@ -1,3 +1,13 @@
+---
+doc_id: account_billing_faq
+title: Account Billing FAQ
+access_level: public
+department: billing
+owner: billing-team
+version: "1.0"
+last_reviewed: "2026-01-15"
+---
+
 # Account and Billing FAQ
 
 ## How do I change my account email?

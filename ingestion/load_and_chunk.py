@@ -1,18 +1,14 @@
+import hashlib
 import json
-
+import re
+from collections import Counter
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
-from typing import List, Dict, Any
-
- 
-
+import yaml
 from langchain_core.documents import Document
-
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
- 
-
- 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,284 +18,254 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 
 OUTPUT_FILE = PROCESSED_DATA_DIR / "chunks.jsonl"
 
- 
+RBAC_POLICY_FILE = PROJECT_ROOT / "configs" / "rbac_policy.yaml"
 
- 
+
+FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+
+REQUIRED_FRONTMATTER_FIELDS = ["doc_id", "title",
+                               "access_level", "department", "owner", "version"]
+
+
+def load_rbac_policy(path: Path = RBAC_POLICY_FILE) -> Dict[str, Any]:
+    """Load the central RBAC policy (single source of truth for access levels)."""
+
+    if not path.exists():
+
+        raise FileNotFoundError(f"RBAC policy not found: {path}")
+
+    with path.open("r", encoding="utf-8") as file:
+
+        return yaml.safe_load(file)
+
+
+def parse_frontmatter(text: str) -> Tuple[Dict[str, Any], str]:
+    """Split YAML frontmatter from Markdown body. Returns (metadata, body)."""
+
+    text = text.replace("\r\n", "\n").lstrip("\ufeff")
+
+    match = FRONTMATTER_PATTERN.match(text)
+
+    if not match:
+
+        return {}, text
+
+    metadata = yaml.safe_load(match.group(1)) or {}
+
+    body = text[match.end():].strip() + "\n"
+
+    return metadata, body
+
+
+def resolve_access_level(frontmatter: Dict[str, Any], file_name: str,
+
+                         valid_levels: List[str], default_level: str) -> str:
+    """Fail-closed access resolution: missing label -> default (restricted); invalid label -> error."""
+
+    level = frontmatter.get("access_level")
+
+    if level is None:
+
+        print(
+            f"WARNING: {file_name} has no access_level. Defaulting to '{default_level}' (fail-closed).")
+
+        return default_level
+
+    level = str(level).strip().lower()
+
+    if level not in valid_levels:
+
+        raise ValueError(
+            f"{file_name}: invalid access_level '{level}'. Allowed: {valid_levels}")
+
+    return level
+
 
 def extract_title(markdown_text: str, fallback_title: str) -> str:
 
-    """
-    Extract the first Markdown H1 title from a document.
-    If no H1 title exists, use the file name as fallback.
-    """
-
     for line in markdown_text.splitlines():
 
-        clean_line = line.strip()
+        if line.strip().startswith("# "):
 
-        if clean_line.startswith("# "):
-
-            return clean_line.replace("# ", "").strip()
+            return line.strip()[2:].strip()
 
     return fallback_title
 
- 
 
- 
+def extract_section(chunk_text: str) -> str:
+    """Return the first '## ' heading inside a chunk, used for precise citations."""
 
-def load_markdown_documents(raw_data_dir: Path) -> List[Document]:
+    for line in chunk_text.splitlines():
 
-    """
+        if line.strip().startswith("## "):
 
-    Load all Markdown files from the raw data directory and convert them
+            return line.strip()[3:].strip()
 
-    into LangChain Document objects with metadata.
+    return "Overview"
 
-    """
 
-    documents = []
+def load_markdown_documents(raw_data_dir: Path, policy: Dict[str, Any]) -> List[Document]:
 
- 
+    valid_levels = policy["access_levels"]
+
+    default_level = policy["default_access_level"]
 
     markdown_files = sorted(raw_data_dir.glob("*.md"))
-
- 
 
     if not markdown_files:
 
         raise FileNotFoundError(f"No Markdown files found in {raw_data_dir}")
 
- 
+    documents = []
+
+    seen_doc_ids = set()
 
     for file_path in markdown_files:
 
-        text = file_path.read_text(encoding="utf-8")
+        raw_text = file_path.read_text(encoding="utf-8")
 
-        title = extract_title(text, fallback_title=file_path.stem)
+        frontmatter, body = parse_frontmatter(raw_text)
 
- 
+        missing = [f for f in REQUIRED_FRONTMATTER_FIELDS if f not in frontmatter]
+
+        if missing:
+
+            print(
+                f"WARNING: {file_path.name} is missing frontmatter fields: {missing}")
+
+        doc_id = str(frontmatter.get("doc_id", file_path.stem))
+
+        if doc_id in seen_doc_ids:
+
+            raise ValueError(
+                f"Duplicate doc_id '{doc_id}' in {file_path.name}")
+
+        seen_doc_ids.add(doc_id)
+
+        access_level = resolve_access_level(
+            frontmatter, file_path.name, valid_levels, default_level)
+
+        # All metadata values are strings/ints so they are compatible with vector DB metadata.
 
         metadata = {
 
+            "doc_id": doc_id,
+
             "source": file_path.name,
 
-            "source_path": str(file_path.relative_to(PROJECT_ROOT)),
+            "source_path": file_path.relative_to(PROJECT_ROOT).as_posix(),
 
-            "document_title": title,
+            "document_title": str(frontmatter.get("title", extract_title(body, file_path.stem))),
 
-            "document_type": "customer_support_policy",
+            "document_type": "customer_support_knowledge",
+
+            "access_level": access_level,
+
+            "department": str(frontmatter.get("department", "unknown")),
+
+            "owner": str(frontmatter.get("owner", "unknown")),
+
+            "version": str(frontmatter.get("version", "0.0")),
+
+            "last_reviewed": str(frontmatter.get("last_reviewed", "unknown")),
+
+            "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest()[:16],
 
         }
 
- 
-
-        document = Document(
-
-            page_content=text,
-
-            metadata=metadata,
-
-        )
-
- 
-
-        documents.append(document)
-
- 
+        documents.append(Document(page_content=body, metadata=metadata))
 
     return documents
 
- 
-
- 
 
 def chunk_documents(documents: List[Document]) -> List[Document]:
 
-    """
-
-    Split documents into smaller chunks for retrieval.
-
-    The chunk size is selected to keep enough context while avoiding overly long chunks.
-
-    """
-
-    text_splitter = RecursiveCharacterTextSplitter(
+    splitter = RecursiveCharacterTextSplitter(
 
         chunk_size=700,
 
         chunk_overlap=120,
 
-        separators=[
-
-            "\n## ",
-
-            "\n### ",
-
-            "\n\n",
-
-            "\n",
-
-            ". ",
-
-            " ",
-
-            "",
-
-        ],
+        separators=["\n## ", "\n### ", "\n\n", "\n", ". ", " ", ""],
 
     )
 
- 
+    all_chunks: List[Document] = []
 
-    chunks = text_splitter.split_documents(documents)
+    for document in documents:
 
- 
+        doc_chunks = splitter.split_documents([document])
 
-    for index, chunk in enumerate(chunks):
+        for index, chunk in enumerate(doc_chunks):
 
-        chunk.metadata["chunk_id"] = f"chunk_{index:04d}"
+            chunk.metadata["chunk_id"] = f"{document.metadata['doc_id']}::chunk_{index:03d}"
 
-        chunk.metadata["chunk_index"] = index
+            chunk.metadata["chunk_index"] = index
 
-        chunk.metadata["chunk_char_count"] = len(chunk.page_content)
+            chunk.metadata["chunk_char_count"] = len(chunk.page_content)
 
- 
+            chunk.metadata["section"] = extract_section(chunk.page_content)
 
-    return chunks
+            all_chunks.append(chunk)
 
- 
+    return all_chunks
 
- 
-
-def document_to_json(document: Document) -> Dict[str, Any]:
-
-    """
-
-    Convert a LangChain Document object into a JSON-serializable dictionary.
-
-    """
-
-    return {
-
-        "page_content": document.page_content,
-
-        "metadata": document.metadata,
-
-    }
-
- 
-
- 
 
 def save_chunks_jsonl(chunks: List[Document], output_file: Path) -> None:
 
-    """
-
-    Save chunks as a JSONL file.
-
-    Each line is one chunk with text and metadata.
-
-    """
-
     output_file.parent.mkdir(parents=True, exist_ok=True)
-
- 
 
     with output_file.open("w", encoding="utf-8") as file:
 
         for chunk in chunks:
 
-            file.write(json.dumps(document_to_json(chunk), ensure_ascii=False) + "\n")
+            record = {"page_content": chunk.page_content,
+                      "metadata": chunk.metadata}
 
- 
+            file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
- 
 
 def print_summary(documents: List[Document], chunks: List[Document]) -> None:
 
-    """
-
-    Print useful ingestion and chunking statistics.
-
-    """
-
     print("\nDocument Loading Summary")
 
-    print("-" * 80)
+    print("-" * 90)
 
-    print(f"Raw documents loaded: {len(documents)}")
+    print(f"Documents loaded: {len(documents)}")
 
-    print(f"Chunks created: {len(chunks)}")
+    print(f"Chunks created:   {len(chunks)}\n")
 
- 
+    print(f"{'source':<38}{'access_level':<14}{'department':<20}chunks")
 
-    print("\nDocuments:")
+    chunk_counts = Counter(c.metadata["doc_id"] for c in chunks)
 
-    for document in documents:
+    for doc in documents:
 
-        source = document.metadata.get("source")
+        m = doc.metadata
 
-        title = document.metadata.get("document_title")
+        print(
+            f"{m['source']:<38}{m['access_level']:<14}{m['department']:<20}{chunk_counts[m['doc_id']]}")
 
-        char_count = len(document.page_content)
+    print("\nChunks per access level:")
 
-        print(f"- {source} | {title} | {char_count} characters")
+    for level, count in sorted(Counter(c.metadata["access_level"] for c in chunks).items()):
 
- 
+        print(f"- {level}: {count}")
 
-    chunk_lengths = [len(chunk.page_content) for chunk in chunks]
+    lengths = [len(c.page_content) for c in chunks]
 
- 
+    print(f"\nAvg chunk length: {sum(lengths) / len(lengths):.0f} chars "
 
-    if chunk_lengths:
+          f"(min {min(lengths)}, max {max(lengths)})")
 
-        avg_length = sum(chunk_lengths) / len(chunk_lengths)
+    print(f"\nOutput: {OUTPUT_FILE}")
 
-        min_length = min(chunk_lengths)
-
-        max_length = max(chunk_lengths)
-
- 
-
-        print("\nChunk Statistics:")
-
-        print(f"- Average chunk length: {avg_length:.2f} characters")
-
-        print(f"- Minimum chunk length: {min_length} characters")
-
-        print(f"- Maximum chunk length: {max_length} characters")
-
- 
-
-    print("\nSample Chunk:")
-
-    print("-" * 80)
-
-    sample_chunk = chunks[0]
-
-    print(f"Chunk ID: {sample_chunk.metadata.get('chunk_id')}")
-
-    print(f"Source: {sample_chunk.metadata.get('source')}")
-
-    print(f"Title: {sample_chunk.metadata.get('document_title')}")
-
-    print("\nText:")
-
-    print(sample_chunk.page_content[:700])
-
- 
-
-    print("\nOutput File:")
-
-    print(f"- {OUTPUT_FILE}")
-
- 
-
- 
 
 def main() -> None:
 
-    documents = load_markdown_documents(RAW_DATA_DIR)
+    policy = load_rbac_policy()
+
+    documents = load_markdown_documents(RAW_DATA_DIR, policy)
 
     chunks = chunk_documents(documents)
 
@@ -307,9 +273,6 @@ def main() -> None:
 
     print_summary(documents, chunks)
 
- 
-
- 
 
 if __name__ == "__main__":
 

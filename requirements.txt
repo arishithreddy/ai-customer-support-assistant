@@ -15,3 +15,4 @@ scikit-learn
 ragas
 datasets
 langgraph
+pyyaml

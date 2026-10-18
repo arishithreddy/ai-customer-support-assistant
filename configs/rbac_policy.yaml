@@ -1,0 +1,49 @@
+# Single source of truth for document access control.
+
+# Ordered from least to most sensitive.
+
+access_levels:
+
+  - public
+  - internal
+  - restricted
+
+ 
+
+# Fail-closed: any document without a valid label is treated as restricted.
+
+default_access_level: restricted
+
+ 
+
+roles:
+
+  customer:
+
+    description: End user of the support assistant. Public knowledge only.
+
+    allowed_access_levels: [public]
+
+ 
+
+  support_agent:
+
+    description: Support staff. Public docs plus internal playbooks and SOPs.
+
+    allowed_access_levels: [public, internal]
+
+ 
+
+  supervisor:
+
+    description: Support lead. Full knowledge base including restricted playbooks.
+
+    allowed_access_levels: [public, internal, restricted]
+
+ 
+
+  app_admin:
+
+    description: Application/engineering team. Internal docs for debugging; restricted business rules not needed (least privilege).
+
+    allowed_access_levels: [public, internal]

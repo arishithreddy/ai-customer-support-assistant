@@ -1,3 +1,12 @@
+---
+doc_id: damaged_items_policy
+title: Damaged Items Policy
+access_level: public
+department: customer_support
+owner: support-content-team
+version: "1.0"
+last_reviewed: "2026-01-15"
+---
 # Damaged Items Policy
 
 ## Purpose

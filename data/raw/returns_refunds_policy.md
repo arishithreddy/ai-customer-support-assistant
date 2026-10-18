@@ -1,3 +1,13 @@
+---
+doc_id: returns_refunds_policy
+title: Returns and Refunds Policy
+access_level: public
+department: customer_support
+owner: support-content-team
+version: "1.0"
+last_reviewed: "2026-01-15"
+---
+
 # Returns and Refunds Policy
 
 ## Overview
