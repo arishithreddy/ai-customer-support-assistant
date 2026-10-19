@@ -1,11 +1,11 @@
-refund_id,order_id,customer_id,refund_amount,refund_reason,refund_status,refund_requested_at,refund_processed_at,payment_method
-REF001,ORD004,CUST004,79.98,Order cancelled,Completed,2026-10-01,2026-10-03,Credit Card
-REF002,ORD010,CUST010,119.99,Product returned,Completed,2026-09-10,2026-09-13,Debit Card
-REF003,ORD002,CUST002,149.99,Product damaged,Pending,2026-10-10,,Credit Card
-REF004,ORD006,CUST006,249.99,Customer requested cancellation,Pending,2026-10-15,,PayPal
-REF005,ORD003,CUST003,1299.99,Product returned,Rejected,2026-09-01,,Credit Card
-REF006,ORD011,CUST001,39.99,Wrong product received,Completed,2026-08-15,2026-08-18,Credit Card
-REF007,ORD005,CUST005,449.99,Damaged during delivery,Completed,2026-07-15,2026-07-19,Bank Transfer
-REF008,ORD009,CUST009,99.99,Customer requested return,Pending,2026-10-12,,Credit Card
-REF009,ORD014,CUST009,699.99,Order cancellation,Pending,2026-10-15,,Credit Card
-REF010,ORD008,CUST008,79.99,Duplicate payment,Completed,2026-06-20,2026-06-23,PayPal
+refund_id,order_id,customer_id,refund_reason,requested_date,approved_date,processed_date,completed_date,refund_status,refund_amount
+REF001,ORD004,CUST004,Order cancelled,2026-09-30,2026-10-01,2026-10-02,2026-10-03,completed,79.98
+REF002,ORD010,CUST010,Return approved,2026-09-15,2026-09-16,2026-09-19,2026-09-20,completed,119.99
+REF003,ORD003,CUST003,Product issue,2026-08-30,2026-09-01,2026-09-02,,approved,1299.99
+REF004,ORD007,CUST007,Damaged item,2026-10-02,,,,processing,119.98
+REF005,ORD011,CUST001,Customer request,2026-08-20,2026-08-21,2026-08-24,2026-08-25,completed,39.99
+REF006,ORD012,CUST003,Duplicate order,2026-09-10,2026-09-11,2026-09-12,,approved,299.98
+REF007,ORD005,CUST005,Product issue,2026-07-20,,,,denied,449.99
+REF008,ORD002,CUST002,Customer request,2026-10-12,,,,processing,149.99
+REF009,ORD008,CUST008,Subscription cancellation,2026-06-25,2026-06-26,2026-06-28,2026-06-29,completed,79.99
+REF010,ORD015,CUST002,Customer request,2026-09-25,2026-09-26,2026-09-29,2026-09-30,completed,59.99

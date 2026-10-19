@@ -9,3 +9,7 @@ data/processed/
 logs/
 data/vector_store/
 .cache/
+data/database/
+*.db
+*.sqlite
+*.sqlite3
