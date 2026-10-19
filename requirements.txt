@@ -16,3 +16,7 @@ ragas
 datasets
 langgraph
 pyyaml
+langchain-chroma
+langchain-huggingface
+sentence-transformers
+rank-bm25

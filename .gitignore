@@ -7,3 +7,5 @@ chroma_db/
 .DS_Store
 data/processed/
 logs/
+data/vector_store/
+.cache/
