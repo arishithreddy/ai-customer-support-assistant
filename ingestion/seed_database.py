@@ -12,13 +12,11 @@ from typing import Any, Optional
 
 from uuid import uuid4
 
- 
 
 from sqlalchemy import func, select
 
 from sqlalchemy.orm import Session
 
- 
 
 from backend.database.models import (
 
@@ -42,37 +40,24 @@ from backend.database.models import (
 
 from backend.database.session import DATABASE_FILE, SessionLocal, engine
 
- 
-
- 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 MOCK_DATA_DIR = PROJECT_ROOT / "data" / "mock_business"
 
- 
-
- 
 
 def read_csv(file_name: str) -> list[dict[str, str]]:
 
     file_path = MOCK_DATA_DIR / file_name
 
- 
-
     if not file_path.exists():
 
         raise FileNotFoundError(f"Seed file not found: {file_path}")
-
- 
 
     with file_path.open("r", encoding="utf-8-sig", newline="") as file:
 
         return list(csv.DictReader(file))
 
- 
-
- 
 
 def optional_text(value: Optional[str]) -> Optional[str]:
 
@@ -80,23 +65,15 @@ def optional_text(value: Optional[str]) -> Optional[str]:
 
         return None
 
- 
-
     cleaned = value.strip()
 
     return cleaned if cleaned else None
 
- 
-
- 
 
 def parse_date(value: str) -> date:
 
     return date.fromisoformat(value.strip())
 
- 
-
- 
 
 def parse_optional_date(value: Optional[str]) -> Optional[date]:
 
@@ -104,12 +81,8 @@ def parse_optional_date(value: Optional[str]) -> Optional[date]:
 
     return date.fromisoformat(cleaned) if cleaned else None
 
- 
-
- 
 
 def parse_datetime(value: str) -> datetime:
-
     """
 
     CSV values contain dates. Store them as UTC timestamps at midnight.
@@ -117,8 +90,6 @@ def parse_datetime(value: str) -> datetime:
     """
 
     parsed_date = date.fromisoformat(value.strip())
-
- 
 
     return datetime(
 
@@ -132,27 +103,17 @@ def parse_datetime(value: str) -> datetime:
 
     )
 
- 
-
- 
 
 def parse_bool(value: str) -> bool:
 
     normalized = value.strip().lower()
 
- 
-
     if normalized not in {"true", "false"}:
 
         raise ValueError(f"Invalid boolean value: {value}")
 
- 
-
     return normalized == "true"
 
- 
-
- 
 
 def dollars_to_cents(value: str) -> int:
 
@@ -164,13 +125,8 @@ def dollars_to_cents(value: str) -> int:
 
     )
 
- 
-
     return int(amount * 100)
 
- 
-
- 
 
 def seed_customers(session: Session) -> None:
 
@@ -196,9 +152,6 @@ def seed_customers(session: Session) -> None:
 
         )
 
- 
-
- 
 
 def seed_products(session: Session) -> None:
 
@@ -226,9 +179,6 @@ def seed_products(session: Session) -> None:
 
         )
 
- 
-
- 
 
 def seed_orders(session: Session) -> None:
 
@@ -264,9 +214,6 @@ def seed_orders(session: Session) -> None:
 
         )
 
- 
-
- 
 
 def seed_refunds(session: Session) -> None:
 
@@ -302,9 +249,6 @@ def seed_refunds(session: Session) -> None:
 
         )
 
- 
-
- 
 
 def seed_tickets(session: Session) -> None:
 
@@ -336,9 +280,6 @@ def seed_tickets(session: Session) -> None:
 
         )
 
- 
-
- 
 
 def seed_app_users(session: Session) -> None:
 
@@ -371,6 +312,21 @@ def seed_app_users(session: Session) -> None:
             role="customer",
 
             customer_id="CUST002",
+
+            is_active=True,
+
+        ),
+
+        AppUser(
+            user_id="USR-CUST-005",
+
+            username="customer_emma",
+
+            identity_subject="local-customer-emma",
+
+            role="customer",
+
+            customer_id="CUST005",
 
             is_active=True,
 
@@ -426,13 +382,8 @@ def seed_app_users(session: Session) -> None:
 
     ]
 
- 
-
     session.add_all(users)
 
- 
-
- 
 
 def seed_initial_audit_event(session: Session) -> None:
 
@@ -470,9 +421,6 @@ def seed_initial_audit_event(session: Session) -> None:
 
     )
 
- 
-
- 
 
 def count_rows(
 
@@ -494,9 +442,6 @@ def count_rows(
 
     )
 
- 
-
- 
 
 def print_summary(session: Session) -> None:
 
@@ -518,13 +463,9 @@ def print_summary(session: Session) -> None:
 
     ]
 
- 
-
     print("\nDatabase Seed Summary")
 
     print("-" * 70)
-
- 
 
     for model in models:
 
@@ -536,21 +477,15 @@ def print_summary(session: Session) -> None:
 
         )
 
- 
-
     print(f"\nDatabase file: {DATABASE_FILE}")
 
- 
-
- 
 
 def rebuild_database() -> None:
-
     """
 
     Rebuild the local development database from synthetic fixtures.
 
- 
+
 
     Never use destructive rebuild logic against a production database.
 
@@ -558,17 +493,11 @@ def rebuild_database() -> None:
 
     engine.dispose()
 
- 
-
     if DATABASE_FILE.exists():
 
         DATABASE_FILE.unlink()
 
- 
-
     Base.metadata.create_all(bind=engine)
-
- 
 
     with SessionLocal() as session:
 
@@ -580,13 +509,9 @@ def rebuild_database() -> None:
 
             session.flush()
 
- 
-
             seed_orders(session)
 
             session.flush()
-
- 
 
             seed_refunds(session)
 
@@ -596,17 +521,11 @@ def rebuild_database() -> None:
 
             session.flush()
 
- 
-
             seed_initial_audit_event(session)
 
             session.commit()
 
- 
-
             print_summary(session)
-
- 
 
         except Exception:
 
@@ -614,9 +533,6 @@ def rebuild_database() -> None:
 
             raise
 
- 
-
- 
 
 if __name__ == "__main__":
 

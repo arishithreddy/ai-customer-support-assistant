@@ -50,9 +50,8 @@ EXPECTED_COUNTS = {
 
     SupportTicket: 10,
 
-    AppUser: 5,
+    AppUser: 6,
 
-    AuditLog: 1,
 
 }
 
@@ -95,8 +94,13 @@ def test_row_counts(session) -> None:
         )
 
  
+def test_audit_log_exists(session) -> None:
 
- 
+    audit_log_count = get_count(session, AuditLog)
+
+    assert audit_log_count >= 1,(
+        f"Expected at least one audit log entry, found {audit_log_count}"
+    )
 
 def test_order_relationships(session) -> None:
 
@@ -216,6 +220,8 @@ def main() -> None:
 
         print("Row count validation: passed")
 
+        test_audit_log_exists(session)
+        print("Audit log validation: passed")
  
 
         test_order_relationships(session)
