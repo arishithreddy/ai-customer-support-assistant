@@ -22,3 +22,5 @@ sentence-transformers
 rank-bm25
 sqlalchemy
 mcp
+PyJWT
+pwdlib[argon2]

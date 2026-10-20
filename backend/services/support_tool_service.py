@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-
+from backend.security.authorization import has_permission
 from typing import Any, Optional
 
 
@@ -173,6 +173,13 @@ class SupportToolService:
             },
 
         )
+
+    @staticmethod
+    def _has_permission(actor: AppUser, permission: str) -> bool:
+        """
+        Check if the actor has the specified permission.
+        """
+        return has_permission(actor.role, permission)
 
     @staticmethod
     def _can_access_customer_record(
@@ -437,6 +444,36 @@ class SupportToolService:
 
                 }
 
+            if not self._has_permission(actor, "read_order"):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="read_order",
+
+                    resource_type="order",
+
+                    resource_id=order_id,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
+
+                )
+
+                session.commit()
+
+                return {
+
+                    "status": "denied",
+
+                    "message": GENERIC_DENIAL_MESSAGE,
+
+                }
+
             order = OrderRepository.get_by_id(
 
                 session,
@@ -589,6 +626,36 @@ class SupportToolService:
 
                 }
 
+            if not self._has_permission(actor, "read_refund"):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="read_refund",
+
+                    resource_type="refund",
+
+                    resource_id=refund_id,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
+
+                )
+
+                session.commit()
+
+                return {
+
+                    "status": "denied",
+
+                    "message": GENERIC_DENIAL_MESSAGE,
+
+                }
+
             refund = RefundRepository.get_by_id(
 
                 session,
@@ -700,6 +767,36 @@ class SupportToolService:
                     outcome="denied",
 
                     reason_code="INVALID_OR_INACTIVE_IDENTITY",
+
+                )
+
+                session.commit()
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Product information is unavailable.",
+
+                }
+
+            if not self._has_permission(actor, "read_product"):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="read_product",
+
+                    resource_type="product",
+
+                    resource_id=product_id,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
 
                 )
 
@@ -826,6 +923,36 @@ class SupportToolService:
                     outcome="denied",
 
                     reason_code="INVALID_OR_INACTIVE_IDENTITY",
+
+                )
+
+                session.commit()
+
+                return {
+
+                    "status": "denied",
+
+                    "message": GENERIC_DENIAL_MESSAGE,
+
+                }
+
+            if not self._has_permission(actor, "read_ticket"):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="read_ticket",
+
+                    resource_type="ticket",
+
+                    resource_id=ticket_id,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
 
                 )
 

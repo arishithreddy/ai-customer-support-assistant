@@ -1,12 +1,10 @@
 from __future__ import annotations
 
- 
 
 from datetime import date, datetime, timezone
 
 from typing import Optional
 
- 
 
 from sqlalchemy import (
 
@@ -32,31 +30,20 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
- 
-
- 
 
 def utc_now() -> datetime:
 
     return datetime.now(timezone.utc)
 
- 
-
- 
 
 class Base(DeclarativeBase):
 
     pass
 
- 
-
- 
 
 class Customer(Base):
 
     __tablename__ = "customers"
-
- 
 
     customer_id: Mapped[str] = mapped_column(String(30), primary_key=True)
 
@@ -70,8 +57,6 @@ class Customer(Base):
 
     created_at: Mapped[date] = mapped_column(Date, nullable=False)
 
- 
-
     orders: Mapped[list["Order"]] = relationship(back_populates="customer")
 
     refunds: Mapped[list["Refund"]] = relationship(back_populates="customer")
@@ -83,8 +68,6 @@ class Customer(Base):
     )
 
     users: Mapped[list["AppUser"]] = relationship(back_populates="customer")
-
- 
 
     __table_args__ = (
 
@@ -106,15 +89,10 @@ class Customer(Base):
 
     )
 
- 
-
- 
 
 class Product(Base):
 
     __tablename__ = "products"
-
- 
 
     product_id: Mapped[str] = mapped_column(String(30), primary_key=True)
 
@@ -152,17 +130,11 @@ class Product(Base):
 
     )
 
- 
-
     # Money is stored as cents instead of a floating-point number.
 
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
 
- 
-
     orders: Mapped[list["Order"]] = relationship(back_populates="product")
-
- 
 
     __table_args__ = (
 
@@ -184,19 +156,12 @@ class Product(Base):
 
     )
 
- 
-
- 
 
 class Order(Base):
 
     __tablename__ = "orders"
 
- 
-
     order_id: Mapped[str] = mapped_column(String(30), primary_key=True)
-
- 
 
     customer_id: Mapped[str] = mapped_column(
 
@@ -208,8 +173,6 @@ class Order(Base):
 
     )
 
- 
-
     product_id: Mapped[str] = mapped_column(
 
         ForeignKey("products.product_id"),
@@ -219,8 +182,6 @@ class Order(Base):
         index=True,
 
     )
-
- 
 
     order_status: Mapped[str] = mapped_column(String(30), nullable=False)
 
@@ -244,8 +205,6 @@ class Order(Base):
 
     total_amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
 
- 
-
     customer: Mapped["Customer"] = relationship(back_populates="orders")
 
     product: Mapped["Product"] = relationship(back_populates="orders")
@@ -257,8 +216,6 @@ class Order(Base):
         back_populates="order"
 
     )
-
- 
 
     __table_args__ = (
 
@@ -284,19 +241,12 @@ class Order(Base):
 
     )
 
- 
-
- 
 
 class Refund(Base):
 
     __tablename__ = "refunds"
 
- 
-
     refund_id: Mapped[str] = mapped_column(String(30), primary_key=True)
-
- 
 
     order_id: Mapped[str] = mapped_column(
 
@@ -308,8 +258,6 @@ class Refund(Base):
 
     )
 
- 
-
     customer_id: Mapped[str] = mapped_column(
 
         ForeignKey("customers.customer_id"),
@@ -319,8 +267,6 @@ class Refund(Base):
         index=True,
 
     )
-
- 
 
     refund_status: Mapped[str] = mapped_column(String(30), nullable=False)
 
@@ -346,13 +292,9 @@ class Refund(Base):
 
     refund_amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
 
- 
-
     order: Mapped["Order"] = relationship(back_populates="refunds")
 
     customer: Mapped["Customer"] = relationship(back_populates="refunds")
-
- 
 
     __table_args__ = (
 
@@ -374,19 +316,12 @@ class Refund(Base):
 
     )
 
- 
-
- 
 
 class SupportTicket(Base):
 
     __tablename__ = "support_tickets"
 
- 
-
     ticket_id: Mapped[str] = mapped_column(String(30), primary_key=True)
-
- 
 
     customer_id: Mapped[str] = mapped_column(
 
@@ -398,8 +333,6 @@ class SupportTicket(Base):
 
     )
 
- 
-
     order_id: Mapped[Optional[str]] = mapped_column(
 
         ForeignKey("orders.order_id"),
@@ -409,8 +342,6 @@ class SupportTicket(Base):
         index=True,
 
     )
-
- 
 
     issue_type: Mapped[str] = mapped_column(String(60), nullable=False)
 
@@ -436,13 +367,9 @@ class SupportTicket(Base):
 
     summary: Mapped[str] = mapped_column(Text, nullable=False)
 
- 
-
     customer: Mapped["Customer"] = relationship(back_populates="tickets")
 
     order: Mapped[Optional["Order"]] = relationship(back_populates="tickets")
-
- 
 
     __table_args__ = (
 
@@ -464,9 +391,6 @@ class SupportTicket(Base):
 
     )
 
- 
-
- 
 
 class AppUser(Base):
 
@@ -474,23 +398,19 @@ class AppUser(Base):
 
     Application identity mapped to a role.
 
- 
+
 
     Authentication credentials are not stored here yet. In the authentication
 
     step, a verified JWT subject will map to identity_subject.
 
- 
+
 
     A customer user must have a customer_id. Staff users should not.
 
     """
 
- 
-
     __tablename__ = "app_users"
-
- 
 
     user_id: Mapped[str] = mapped_column(String(40), primary_key=True)
 
@@ -514,9 +434,13 @@ class AppUser(Base):
 
     )
 
-    role: Mapped[str] = mapped_column(String(30), nullable=False)
+    password_hash: Mapped[Optional[str]] = mapped_column(
+        String(160),
+        unique=True,
+        nullable=True,
+    )
 
- 
+    role: Mapped[str] = mapped_column(String(30), nullable=False)
 
     customer_id: Mapped[Optional[str]] = mapped_column(
 
@@ -528,8 +452,6 @@ class AppUser(Base):
 
     )
 
- 
-
     is_active: Mapped[bool] = mapped_column(
 
         Boolean,
@@ -540,8 +462,6 @@ class AppUser(Base):
 
     )
 
- 
-
     created_at: Mapped[datetime] = mapped_column(
 
         DateTime(timezone=True),
@@ -551,8 +471,6 @@ class AppUser(Base):
         default=utc_now,
 
     )
-
- 
 
     customer: Mapped[Optional["Customer"]] = relationship(
 
@@ -565,8 +483,6 @@ class AppUser(Base):
         back_populates="actor"
 
     )
-
- 
 
     __table_args__ = (
 
@@ -590,9 +506,6 @@ class AppUser(Base):
 
     )
 
- 
-
- 
 
 class AuditLog(Base):
 
@@ -600,7 +513,7 @@ class AuditLog(Base):
 
     Security and tool-action audit trail.
 
- 
+
 
     Request text and tool outputs should not be stored here by default because
 
@@ -608,15 +521,9 @@ class AuditLog(Base):
 
     """
 
- 
-
     __tablename__ = "audit_logs"
 
- 
-
     audit_id: Mapped[str] = mapped_column(String(50), primary_key=True)
-
- 
 
     actor_user_id: Mapped[Optional[str]] = mapped_column(
 
@@ -627,8 +534,6 @@ class AuditLog(Base):
         index=True,
 
     )
-
- 
 
     action: Mapped[str] = mapped_column(String(100), nullable=False)
 
@@ -652,8 +557,6 @@ class AuditLog(Base):
 
     )
 
- 
-
     # Must contain only redacted/non-sensitive JSON metadata.
 
     details_json: Mapped[str] = mapped_column(
@@ -665,8 +568,6 @@ class AuditLog(Base):
         default="{}",
 
     )
-
- 
 
     created_at: Mapped[datetime] = mapped_column(
 
@@ -680,15 +581,11 @@ class AuditLog(Base):
 
     )
 
- 
-
     actor: Mapped[Optional["AppUser"]] = relationship(
 
         back_populates="audit_events"
 
     )
-
- 
 
     __table_args__ = (
 

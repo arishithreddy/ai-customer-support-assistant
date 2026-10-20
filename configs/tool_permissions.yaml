@@ -1,0 +1,93 @@
+default_decision: deny
+
+ 
+
+permissions:
+
+  read_order:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  read_refund:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  read_ticket:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  read_product:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+      - app_admin
+
+ 
+
+  create_ticket:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  update_ticket:
+
+    allowed_roles:
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  approve_refund:
+
+    allowed_roles:
+
+      - supervisor
+
+ 
+
+  read_audit_logs:
+
+    allowed_roles:
+
+      - supervisor
+
+      - app_admin

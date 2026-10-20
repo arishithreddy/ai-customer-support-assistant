@@ -1,6 +1,10 @@
 import csv
+import os
 
 import json
+
+from dotenv import load_dotenv
+from pwdlib import PasswordHash
 
 from datetime import date, datetime, timezone
 
@@ -44,6 +48,9 @@ from backend.database.session import DATABASE_FILE, SessionLocal, engine
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 MOCK_DATA_DIR = PROJECT_ROOT / "data" / "mock_business"
+
+load_dotenv(PROJECT_ROOT / ".env")
+PASSWORD_HASHER = PasswordHash.recommended()
 
 
 def read_csv(file_name: str) -> list[dict[str, str]]:
@@ -280,108 +287,76 @@ def seed_tickets(session: Session) -> None:
 
         )
 
+def get_demo_passwoed() -> str:
+    demo_password = os.getenv("DEMO_USER_PASSWORD", "").strip()
+
+    if len(demo_password) < 12:
+
+        raise RuntimeError(
+
+            "DEMO_USER_PASSWORD must be configured in the .env file and be at least 12 characters long."
+        )
+
+    return demo_password
+
 
 def seed_app_users(session: Session) -> None:
+    demo_password = get_demo_passwoed()
 
-    users = [
-
-        AppUser(
-
-            user_id="USR-CUST-001",
-
-            username="customer_ava",
-
-            identity_subject="local-customer-ava",
-
-            role="customer",
-
-            customer_id="CUST001",
-
-            is_active=True,
-
-        ),
-
-        AppUser(
-
-            user_id="USR-CUST-002",
-
-            username="customer_liam",
-
-            identity_subject="local-customer-liam",
-
-            role="customer",
-
-            customer_id="CUST002",
-
-            is_active=True,
-
-        ),
-
-        AppUser(
-            user_id="USR-CUST-005",
-
-            username="customer_emma",
-
-            identity_subject="local-customer-emma",
-
-            role="customer",
-
-            customer_id="CUST005",
-
-            is_active=True,
-
-        ),
-
-        AppUser(
-
-            user_id="USR-SUPPORT-001",
-
-            username="support_agent_demo",
-
-            identity_subject="local-support-agent-demo",
-
-            role="support_agent",
-
-            customer_id=None,
-
-            is_active=True,
-
-        ),
-
-        AppUser(
-
-            user_id="USR-SUPERVISOR-001",
-
-            username="supervisor_demo",
-
-            identity_subject="local-supervisor-demo",
-
-            role="supervisor",
-
-            customer_id=None,
-
-            is_active=True,
-
-        ),
-
-        AppUser(
-
-            user_id="USR-ADMIN-001",
-
-            username="app_admin_demo",
-
-            identity_subject="local-app-admin-demo",
-
-            role="app_admin",
-
-            customer_id=None,
-
-            is_active=True,
-
-        ),
-
+    users_definition = [
+         {
+            "user_id": "USR-CUST-001",
+            "username": "customer_ava",
+            "identity_subject": "local-customer-ava",
+            "role": "customer",
+            "customer_id": "CUST001",
+          },
+          {
+            "user_id": "USR-CUST-002",
+            "username": "customer_liam",
+            "identity_subject": "local-customer-liam",
+            "role": "customer",
+            "customer_id": "CUST002",
+          },
+          {
+            "user_id": "USR-CUST-005",
+            "username": "customer_emma",
+            "identity_subject": "local-customer-emma",
+            "role": "customer",
+            "customer_id": "CUST005",
+          },
+          {
+            "user_id": "USR-SUPPORT-001",
+            "username": "support_agent_demo",
+            "identity_subject": "local-support-agent-demo",
+            "role": "support_agent",
+            "customer_id": None,
+          },
+          {
+            "user_id": "USR-SUPERVISOR-001",
+            "username": "supervisor_demo",
+            "identity_subject": "local-supervisor-demo",
+            "role": "supervisor",
+            "customer_id": None,
+          },
+          {
+            "user_id": "USR-ADMIN-001",
+            "username": "app_admin_demo",
+            "identity_subject": "local-app-admin-demo",
+            "role": "app_admin",
+            "customer_id": None,
+          },
     ]
 
+    users = []
+    for definition in users_definition:
+        users.append(
+            AppUser(
+                **definition,
+                password_hash=PASSWORD_HASHER.hash(demo_password),
+                is_active=True,
+            )
+        )
     session.add_all(users)
 
 
