@@ -30,11 +30,7 @@ from langchain_core.messages import (
 
 from langchain_core.tools import BaseTool
 
-from langchain_mcp_adapters.client import (
-
-    MultiServerMCPClient,
-
-)
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from langchain_openai import ChatOpenAI
 
@@ -45,6 +41,14 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
 
+from backend.agent.answer_guard import (
+
+    build_repair_instruction,
+
+    verify_agent_answer,
+
+)
+
 from backend.agent.identity import (
 
     AgentIdentity,
@@ -53,23 +57,11 @@ from backend.agent.identity import (
 
 )
 
-from backend.agent.knowledge_tool import (
+from backend.agent.knowledge_tool import create_knowledge_search_tool
 
-    create_knowledge_search_tool,
+from backend.retrieval.hybrid_retriever import SecureHybridRetriever
 
-)
-
-from backend.retrieval.hybrid_retriever import (
-
-    SecureHybridRetriever,
-
-)
-
-from backend.security.authorization import (
-
-    has_permission,
-
-)
+from backend.security.authorization import has_permission
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -113,6 +105,14 @@ class AgentRuntime:
 
         authenticated runtime.
 
+
+
+        The final answer is checked once by an answer guard. If it fails,
+
+        the agent receives a bounded repair instruction and gets one chance
+
+        to produce a safer answer.
+
         """
 
         cleaned_question = question.strip()
@@ -127,11 +127,7 @@ class AgentRuntime:
 
                 "messages": [
 
-                    HumanMessage(
-
-                        content=cleaned_question
-
-                    )
+                    HumanMessage(content=cleaned_question)
 
                 ]
 
@@ -161,11 +157,101 @@ class AgentRuntime:
 
             )
 
-        if isinstance(final_message.content, str):
+        answer = (
 
-            return final_message.content
+            final_message.content
 
-        return str(final_message.content)
+            if isinstance(final_message.content, str)
+
+            else str(final_message.content)
+
+        )
+
+        guard_result = verify_agent_answer(
+
+            answer,
+
+            result["messages"],
+
+        )
+
+        if guard_result.passed:
+
+            return answer
+
+        repair_instruction = build_repair_instruction(
+
+            guard_result
+
+        )
+
+        repaired_result = await self.graph.ainvoke(
+
+            {
+
+                "messages": [
+
+                    HumanMessage(content=repair_instruction)
+
+                ]
+
+            },
+
+            config={
+
+                "configurable": {
+
+                    "thread_id": self.thread_id
+
+                },
+
+                "recursion_limit": 20,
+
+            },
+
+        )
+
+        repaired_message = repaired_result["messages"][-1]
+
+        if not isinstance(repaired_message, AIMessage):
+
+            return (
+
+                "I could not verify the answer against the available "
+
+                "evidence. Please contact support for help."
+
+            )
+
+        repaired_answer = (
+
+            repaired_message.content
+
+            if isinstance(repaired_message.content, str)
+
+            else str(repaired_message.content)
+
+        )
+
+        repaired_guard_result = verify_agent_answer(
+
+            repaired_answer,
+
+            repaired_result["messages"],
+
+        )
+
+        if repaired_guard_result.passed:
+
+            return repaired_answer
+
+        return (
+
+            "I could not verify the answer against the available "
+
+            "evidence. Please contact support for help."
+
+        )
 
 
 def load_agent_config() -> dict[str, Any]:
@@ -450,16 +536,10 @@ async def load_authorized_tools(
 
     config: dict[str, Any],
 
-) -> tuple[
-
-    list[BaseTool],
-
-    MultiServerMCPClient,
-
-]:
+) -> tuple[list[BaseTool], MultiServerMCPClient]:
     """
 
-    Load MCP tools and combine them with a role-bound RAG tool.
+    Load MCP tools and combine them with a role-bound self-healing RAG tool.
 
     """
 
@@ -736,4 +816,5 @@ async def create_agent_runtime(
         thread_id=thread_id or uuid4().hex,
 
         mcp_client=mcp_client,
+
     )

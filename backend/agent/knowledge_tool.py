@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 
+from dataclasses import asdict
+
 from typing import Any
 
 
@@ -12,6 +14,12 @@ from pydantic import BaseModel, Field
 from backend.retrieval.hybrid_retriever import (
 
     SecureHybridRetriever,
+
+)
+
+from backend.retrieval.self_healing import (
+
+    SelfHealingRetriever,
 
 )
 
@@ -66,15 +74,21 @@ def create_knowledge_search_tool(
 ) -> StructuredTool:
     """
 
-    Create a retrieval tool permanently bound to one authenticated role.
+    Create a self-healing retrieval tool bound to one authenticated role.
 
 
 
-    The role is captured by the application and is not exposed as an
+    The role is captured by trusted application code and is not exposed
 
-    LLM-controlled tool argument.
+    as a tool argument.
 
     """
+
+    self_healing_retriever = SelfHealingRetriever(
+
+        retriever
+
+    )
 
     def search_knowledge_base(
 
@@ -84,7 +98,7 @@ def create_knowledge_search_tool(
 
     ) -> dict[str, Any]:
 
-        results = retriever.retrieve(
+        retrieval_result = self_healing_retriever.retrieve(
 
             query=query,
 
@@ -100,7 +114,7 @@ def create_knowledge_search_tool(
 
         total_characters = 0
 
-        for result in results:
+        for result in retrieval_result.results:
 
             document = result["document"]
 
@@ -174,21 +188,37 @@ def create_knowledge_search_tool(
 
         return {
 
-            "status": "success",
+            "status": retrieval_result.status,
 
-            "query": query,
+            "original_query": query,
+
+            "selected_query": retrieval_result.selected_query,
+
+            "rewritten_query": retrieval_result.rewritten_query,
 
             "result_count": len(formatted_results),
+
+            "attempts": [
+
+                asdict(attempt)
+
+                for attempt in retrieval_result.attempts
+
+            ],
 
             "results": formatted_results,
 
             "instruction": (
 
-                "Use only these retrieved passages as policy "
+                "Use only these retrieved passages as policy evidence. "
 
-                "evidence. Cite the source title and section. "
+                "Cite the source title and section. Do not cite a HyDE "
 
-                "Do not cite a HyDE passage."
+                "passage. If the retrieved evidence is insufficient, "
+
+                "say that the available knowledge base evidence is "
+
+                "insufficient."
 
             ),
 
@@ -202,19 +232,20 @@ def create_knowledge_search_tool(
 
         description=(
 
-            "Search the authorized company knowledge base for "
+            "Self-healing search over the authorized company knowledge "
 
-            "shipping, returns, refunds, damaged items, warranty, "
+            "base for shipping, returns, refunds, damaged items, warranty, "
 
-            "billing, cancellation, troubleshooting, escalation, "
+            "billing, cancellation, troubleshooting, escalation, and support "
 
-            "and support procedures. The search is automatically "
+            "procedures. The tool grades retrieval quality and may rewrite "
 
-            "restricted to documents allowed for the authenticated "
+            "the search query once if evidence is weak. Search is always "
 
-            "role. Use this tool for policy or procedural questions."
+            "restricted to documents allowed for the authenticated role."
 
         ),
 
         args_schema=KnowledgeSearchInput,
+
     )
