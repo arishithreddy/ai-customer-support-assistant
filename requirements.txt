@@ -27,3 +27,6 @@ pwdlib[argon2]
 langchain-mcp-adapters
 langchain-google-genai
 google-generativeai
+fastapi
+uvicorn
+httpx
