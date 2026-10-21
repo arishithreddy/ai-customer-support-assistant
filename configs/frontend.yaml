@@ -1,0 +1,47 @@
+api:
+
+  base_url: http://127.0.0.1:8000
+
+ 
+
+ui:
+
+  app_title: AI Customer Support Assistant
+
+  page_icon: support
+
+  default_session_id: streamlit-demo-session
+
+ 
+
+demo_users:
+
+  - username: customer_ava
+
+    role: customer
+
+    description: Customer mapped to CUST-001. Can access ORD-1001.
+
+  - username: customer_emma
+
+    role: customer
+
+    description: Customer mapped to CUST-005. Can access ORD-1005 and refund REF-2001.
+
+  - username: support_agent_demo
+
+    role: support_agent
+
+    description: Support staff with public and internal knowledge access.
+
+  - username: supervisor_demo
+
+    role: supervisor
+
+    description: Supervisor with restricted knowledge and audit visibility.
+
+  - username: app_admin_demo
+
+    role: app_admin
+
+    description: Application admin with audit visibility but no customer-order access.
