@@ -1,0 +1,23 @@
+query,role,expected_doc_id,expected_access_level,notes
+
+How long does standard shipping take?,customer,shipping_policy,public,Public shipping policy
+
+What should I do if my item arrived damaged?,customer,damaged_items_policy,public,Public damaged item policy
+
+Can I cancel an order after it has shipped?,customer,order_cancellation_policy,public,Public cancellation policy
+
+How can I reset my password?,customer,account_billing_faq,public,Public account FAQ
+
+What does the warranty cover?,customer,warranty_policy,public,Public warranty policy
+
+What is the known pairing issue for PROD-101?,support_agent,agent_troubleshooting_playbook,internal,Internal support playbook
+
+When should an agent hand off a ticket to a supervisor?,support_agent,ticket_handling_sop,internal,Internal SOP
+
+Can a premium customer receive a late return exception?,supervisor,refund_exception_playbook,restricted,Restricted supervisor policy
+
+What fraud signals require manual review?,supervisor,fraud_detection_guidelines,restricted,Restricted fraud guidelines
+
+Can a premium customer receive a late return exception?,customer,returns_refunds_policy,public,Customer should not retrieve restricted exception playbook
+
+What fraud signals require manual review?,customer,,public,Customer should not retrieve restricted fraud policy

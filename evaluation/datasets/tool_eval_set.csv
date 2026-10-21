@@ -1,0 +1,23 @@
+query,username,expected_tools,notes
+
+Where is order ORD-1001?,customer_ava,get_order_status,Customer owns ORD-1001
+
+Where is order ORD-1002?,customer_ava,get_order_status,Customer does not own ORD-1002 but tool should deny safely
+
+What is the refund status for REF-2001?,customer_emma,get_refund_status,Customer owns REF-2001
+
+Tell me about product PROD-101.,customer_ava,get_product_details,Product info is non-sensitive
+
+What is ticket TICK-3001 status?,customer_emma,get_ticket_status,Customer owns ticket
+
+How long does standard shipping take?,customer_ava,search_knowledge_base,Policy question
+
+Can I cancel order ORD-1001 and what is the policy?,customer_ava,get_order_status|search_knowledge_base,Needs order status and policy
+
+This is the third time nobody helped my refund issue for order ORD-1005. Please escalate this.,customer_emma,classify_support_request|decide_escalation|create_support_ticket,Workflow automation
+
+What is the known pairing issue for PROD-101?,support_agent_demo,search_knowledge_base,Internal knowledge retrieval
+
+Can a premium customer receive a late return exception?,supervisor_demo,search_knowledge_base,Restricted retrieval for supervisor
+
+Show order ORD-1001.,app_admin_demo,,App admin should not have order tool access

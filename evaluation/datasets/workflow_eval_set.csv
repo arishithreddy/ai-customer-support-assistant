@@ -1,0 +1,13 @@
+message,identity_subject,expected_issue_type,expected_priority,expected_sentiment,expected_escalation
+
+This is the third time I contacted support and nobody helped my refund issue.,local-customer-emma,refund,high,frustrated,true
+
+My item arrived damaged and I need a replacement.,local-customer-emma,damaged_item,medium,neutral,false
+
+Tracking has not updated for over a week and my package may be lost.,local-customer-emma,lost_package,high,neutral,true
+
+The speaker stopped working and I want to use the warranty.,local-customer-emma,warranty_claim,medium,neutral,true
+
+I need a copy of my invoice.,local-customer-ava,billing,low,neutral,false
+
+How long does shipping take?,local-customer-ava,general_support,low,neutral,false
