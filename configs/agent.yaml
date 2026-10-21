@@ -1,31 +1,16 @@
 model:
-
-  provider: openai
-
-  model_name: gpt-4o-mini
-
+  provider: google
+  model_name: gemini-2.0-flash
   temperature: 0.0
 
- 
-
 agent:
-
   recursion_limit: 20
-
   max_tool_result_characters: 6000
 
- 
-
 retrieval:
-
   default_use_hyde: false
-
   final_results: 5
 
- 
-
 security:
-
   expose_only_authorized_tools: true
-
   reject_unknown_roles: true

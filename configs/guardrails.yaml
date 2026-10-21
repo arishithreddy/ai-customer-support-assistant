@@ -1,0 +1,42 @@
+input_guardrails:
+
+  block_prompt_injection: true
+
+  block_role_escalation: true
+
+  block_secret_extraction: true
+
+  block_payment_card_like_values: true
+
+ 
+
+output_guardrails:
+
+  redact_pii: true
+
+  redact_tokens: true
+
+  block_restricted_canaries: true
+
+ 
+
+risk_thresholds:
+
+  block_score: 0.75
+
+  warn_score: 0.40
+
+ 
+
+redaction:
+
+  email: "[REDACTED_EMAIL]"
+
+  phone: "[REDACTED_PHONE]"
+
+  payment_card: "[REDACTED_PAYMENT_CARD]"
+
+  jwt: "[REDACTED_TOKEN]"
+
+  secret: "[REDACTED_SECRET]"
+

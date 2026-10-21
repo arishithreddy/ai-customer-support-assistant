@@ -26,7 +26,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from langchain_openai import ChatOpenAI
+from backend.llm.provider import create_chat_model
 
 from rank_bm25 import BM25Okapi
 
@@ -406,27 +406,26 @@ class SecureHybridRetriever:
 
         """
 
-        if not os.getenv("OPENAI_API_KEY"):
-
-            raise RuntimeError(
-
-                "OPENAI_API_KEY is required when HyDE is enabled."
-
-            )
-
- 
-
         hyde_config = self.config["hyde"]
+        provider = hyde_config.get(
+            "provider",
+            os.getenv("LLM_PROVIDER", "google")
+        ).lower()
 
- 
-
-        model = ChatOpenAI(
-
-            model=hyde_config["model_name"],
-
+        if provider in {"google", "gemini"} and not os.getenv("GOOGLE_API_KEY"):
+            raise RuntimeError(
+                "GOOGLE_API_KEY is required when HyDE is enabled with Gemini."
+            )
+        if provider == "openai" and not os.getenv("OPENAI_API_KEY"):
+            raise RuntimeError(
+                "OPENAI_API_KEY is required when HyDE is enabled with OpenAI."
+            )
+        model = create_chat_model(
+            provider=provider,
+            model_name=hyde_config["model_name"],
             temperature=hyde_config.get("temperature", 0.0),
-
         )
+
 
  
 

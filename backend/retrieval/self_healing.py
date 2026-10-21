@@ -22,7 +22,7 @@ from langchain_core.documents import Document
 
 from langchain_core.prompts import ChatPromptTemplate
 
-from langchain_openai import ChatOpenAI
+from backend.llm.provider import create_chat_model
 
 
 from backend.retrieval.hybrid_retriever import (
@@ -308,22 +308,26 @@ class SelfHealingRetriever:
 
             return None
 
-        if not os.getenv("OPENAI_API_KEY"):
+        provider = healing_config.get(
+           "rewrite_provider",
+           os.getenv("LLM_PROVIDER", "google"),
+        ).lower()
 
+        if provider in {"google", "gemini"} and not os.getenv("GOOGLE_API_KEY"):
+            return None
+        if provider == "openai" and not os.getenv("OPENAI_API_KEY"):
             return None
 
-        model = ChatOpenAI(
-
-            model=healing_config["rewrite_model_name"],
-
-            temperature=healing_config.get(
-
-                "rewrite_temperature",
-
-                0.0,
-
+        model = create_chat_model(
+            provider=healing_config.get(
+                "rewrite_provider",
+                os.getenv("LLM_PROVIDER", "google"),
             ),
-
+            model_name=healing_config["rewrite_model_name"],
+            temparature=healing_config.get(
+                "rewrite_temperature",
+                0.0,
+            ),
         )
 
         prompt = ChatPromptTemplate.from_messages(

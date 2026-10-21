@@ -32,7 +32,7 @@ from langchain_core.tools import BaseTool
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-from langchain_openai import ChatOpenAI
+from backend.llm.provider import create_chat_model
 
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -62,6 +62,16 @@ from backend.agent.knowledge_tool import create_knowledge_search_tool
 from backend.retrieval.hybrid_retriever import SecureHybridRetriever
 
 from backend.security.authorization import has_permission
+
+from backend.security.guardrails import (
+
+    evaluate_agent_output,
+
+    evaluate_user_input,
+
+)
+
+from backend.security.security_events import record_guardrail_event
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -107,11 +117,11 @@ class AgentRuntime:
 
 
 
-        The final answer is checked once by an answer guard. If it fails,
+        The request is checked by input guardrails before it reaches the
 
-        the agent receives a bounded repair instruction and gets one chance
+        agent. The final answer is checked by answer and output guardrails
 
-        to produce a safer answer.
+        before being returned.
 
         """
 
@@ -121,13 +131,73 @@ class AgentRuntime:
 
             raise ValueError("Question cannot be empty.")
 
+        input_guard = evaluate_user_input(
+
+            cleaned_question,
+
+            self.identity.role,
+
+        )
+
+        if input_guard.findings:
+
+            record_guardrail_event(
+
+                actor_user_id=self.identity.user_id,
+
+                action="agent_input_guardrail",
+
+                outcome="denied" if input_guard.blocked else "allowed",
+
+                reason_code=(
+
+                    "INPUT_GUARDRAIL_BLOCKED"
+
+                    if input_guard.blocked
+
+                    else "INPUT_GUARDRAIL_FLAGGED"
+
+                ),
+
+                guardrail_result=input_guard,
+
+                extra_details={
+
+                    "role": self.identity.role,
+
+                },
+
+            )
+
+        if input_guard.blocked:
+
+            return (
+
+                "I can’t help with that request. For your security, "
+
+                "please avoid sharing payment details, secrets, access "
+
+                "tokens, or instructions to bypass access controls. "
+
+                "If you need help with an order, refund, product, or "
+
+                "support policy, ask using the relevant order, refund, "
+
+                "product, or ticket ID."
+
+            )
+
         result = await self.graph.ainvoke(
 
             {
 
                 "messages": [
 
-                    HumanMessage(content=cleaned_question)
+                    HumanMessage(
+
+                        content=cleaned_question
+
+                    )
 
                 ]
 
@@ -167,7 +237,7 @@ class AgentRuntime:
 
         )
 
-        guard_result = verify_agent_answer(
+        answer_guard_result = verify_agent_answer(
 
             answer,
 
@@ -175,83 +245,177 @@ class AgentRuntime:
 
         )
 
-        if guard_result.passed:
+        if not answer_guard_result.passed:
 
-            return answer
+            repair_instruction = build_repair_instruction(
 
-        repair_instruction = build_repair_instruction(
-
-            guard_result
-
-        )
-
-        repaired_result = await self.graph.ainvoke(
-
-            {
-
-                "messages": [
-
-                    HumanMessage(content=repair_instruction)
-
-                ]
-
-            },
-
-            config={
-
-                "configurable": {
-
-                    "thread_id": self.thread_id
-
-                },
-
-                "recursion_limit": 20,
-
-            },
-
-        )
-
-        repaired_message = repaired_result["messages"][-1]
-
-        if not isinstance(repaired_message, AIMessage):
-
-            return (
-
-                "I could not verify the answer against the available "
-
-                "evidence. Please contact support for help."
+                answer_guard_result
 
             )
 
-        repaired_answer = (
+            repaired_result = await self.graph.ainvoke(
 
-            repaired_message.content
+                {
 
-            if isinstance(repaired_message.content, str)
+                    "messages": [
 
-            else str(repaired_message.content)
+                        HumanMessage(
+
+                            content=repair_instruction
+
+                        )
+
+                    ]
+
+                },
+
+                config={
+
+                    "configurable": {
+
+                        "thread_id": self.thread_id
+
+                    },
+
+                    "recursion_limit": 20,
+
+                },
+
+            )
+
+            repaired_message = repaired_result["messages"][-1]
+
+            if not isinstance(repaired_message, AIMessage):
+
+                record_guardrail_event(
+
+                    actor_user_id=self.identity.user_id,
+
+                    action="agent_answer_guardrail",
+
+                    outcome="denied",
+
+                    reason_code="ANSWER_GUARDRAIL_NON_AI_REPAIR",
+
+                    guardrail_result=input_guard,
+
+                    extra_details={
+
+                        "role": self.identity.role,
+
+                        "answer_guard_reasons": answer_guard_result.reasons,
+
+                    },
+
+                )
+
+                return (
+
+                    "I could not verify the answer against the available "
+
+                    "evidence. Please contact support for help."
+
+                )
+
+            answer = (
+
+                repaired_message.content
+
+                if isinstance(repaired_message.content, str)
+
+                else str(repaired_message.content)
+
+            )
+
+            repaired_answer_guard_result = verify_agent_answer(
+
+                answer,
+
+                repaired_result["messages"],
+
+            )
+
+            if not repaired_answer_guard_result.passed:
+
+                record_guardrail_event(
+
+                    actor_user_id=self.identity.user_id,
+
+                    action="agent_answer_guardrail",
+
+                    outcome="denied",
+
+                    reason_code="ANSWER_GUARDRAIL_FAILED",
+
+                    guardrail_result=input_guard,
+
+                    extra_details={
+
+                        "role": self.identity.role,
+
+                        "answer_guard_reasons": repaired_answer_guard_result.reasons,
+
+                    },
+
+                )
+
+                return (
+
+                    "I could not verify the answer against the available "
+
+                    "evidence. Please contact support for help."
+
+                )
+
+        output_guard = evaluate_agent_output(
+
+            answer,
+
+            self.identity.role,
 
         )
 
-        repaired_guard_result = verify_agent_answer(
+        if output_guard.findings:
 
-            repaired_answer,
+            record_guardrail_event(
 
-            repaired_result["messages"],
+                actor_user_id=self.identity.user_id,
 
-        )
+                action="agent_output_guardrail",
 
-        if repaired_guard_result.passed:
+                outcome="denied" if output_guard.blocked else "allowed",
 
-            return repaired_answer
+                reason_code=(
 
-        return (
+                    "OUTPUT_GUARDRAIL_BLOCKED"
 
-            "I could not verify the answer against the available "
+                    if output_guard.blocked
 
-            "evidence. Please contact support for help."
+                    else "OUTPUT_GUARDRAIL_REDACTED"
 
-        )
+                ),
+
+                guardrail_result=output_guard,
+
+                extra_details={
+
+                    "role": self.identity.role,
+
+                },
+
+            )
+
+        if output_guard.blocked:
+
+            return (
+
+                "I could not safely return that response. "
+
+                "Please contact support for help."
+
+            )
+
+        return output_guard.sanitized_text
 
 
 def load_agent_config() -> dict[str, Any]:
@@ -690,28 +854,26 @@ async def create_agent_runtime(
         )
 
     model_config = config["model"]
-
-    model_name = os.getenv(
-
-        "OPENAI_MODEL",
-
-        model_config["model_name"],
-
-    )
-
-    model = ChatOpenAI(
-
-        model=model_name,
-
-        temperature=model_config.get(
-
-            "temperature",
-
-            0.0,
-
+    model = create_chat_model(
+        provider=model_config.get(
+            "provider",
+            os.getenv("LLM_PROVIDER", "google"),
         ),
+        model_name=os.getenv(
+            "GEMINI_MODEL",
+            model_config["model_name"],
+        )
 
-    )
+    if model_config.get("provider") in {"google", "gemini"}
+    else os.getenv(
+        "OPENAI_MODEL",
+        model_config["model_name"],
+    ),
+    temperature=model_config.get(
+        "temperature",
+        0.0,
+    ),
+)
 
     model_with_tools = model.bind_tools(tools)
 

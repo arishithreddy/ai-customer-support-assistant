@@ -34,7 +34,8 @@ reranker:
 
 hyde:
   enabled_by_default: false
-  model_name: gpt-4o-mini
+  provider: google
+  model_name: gemini-2.0-flash
   temperature: 0.0
 
 self_healing:
@@ -42,7 +43,8 @@ self_healing:
   max_attempts: 2
   min_quality_score: 0.42
   min_result_count: 2
-  rewrite_enabled: true
-  rewrite_model_name: gpt-4o-mini
+  rewrite_enabled: false
+  rewrite_provider: google
+  rewrite_model_name: gemini-2.0-flash
   rewrite_temperature: 0.0
   max_rewrite_words: 40

@@ -25,3 +25,5 @@ mcp
 PyJWT
 pwdlib[argon2]
 langchain-mcp-adapters
+langchain-google-genai
+google-generativeai
