@@ -6,13 +6,11 @@ from typing import Any, Optional
 
 from uuid import uuid4
 
- 
 
 from sqlalchemy import select
 
 from sqlalchemy.orm import Session, joinedload
 
- 
 
 from backend.database.models import (
 
@@ -30,22 +28,15 @@ from backend.database.models import (
 
 )
 
- 
-
- 
 
 def cents_to_dollars(cents: int) -> str:
 
     return f"{cents / 100:.2f}"
 
- 
-
- 
 
 class UserRepository:
 
     @staticmethod
-
     def get_by_user_id(
 
         session: Session,
@@ -56,10 +47,7 @@ class UserRepository:
 
         return session.get(AppUser, user_id)
 
- 
-
     @staticmethod
-
     def get_by_identity_subject(
 
         session: Session,
@@ -74,18 +62,12 @@ class UserRepository:
 
         )
 
- 
-
         return session.scalar(statement)
 
- 
-
- 
 
 class OrderRepository:
 
     @staticmethod
-
     def get_by_id(
 
         session: Session,
@@ -110,21 +92,15 @@ class OrderRepository:
 
         )
 
- 
-
         return session.scalar(statement)
 
- 
-
     @staticmethod
-
     def to_internal_dict(order: Order) -> dict[str, Any]:
-
         """
 
         Internal representation only.
 
- 
+
 
         Do not return this directly to customers. The MCP service layer will
 
@@ -182,14 +158,10 @@ class OrderRepository:
 
         }
 
- 
-
- 
 
 class RefundRepository:
 
     @staticmethod
-
     def get_by_id(
 
         session: Session,
@@ -214,14 +186,9 @@ class RefundRepository:
 
         )
 
- 
-
         return session.scalar(statement)
 
- 
-
     @staticmethod
-
     def get_for_order(
 
         session: Session,
@@ -240,18 +207,12 @@ class RefundRepository:
 
         )
 
- 
-
         return list(session.scalars(statement).all())
 
- 
-
- 
 
 class ProductRepository:
 
     @staticmethod
-
     def get_by_id(
 
         session: Session,
@@ -262,14 +223,10 @@ class ProductRepository:
 
         return session.get(Product, product_id)
 
- 
-
- 
 
 class TicketRepository:
 
     @staticmethod
-
     def get_by_id(
 
         session: Session,
@@ -280,10 +237,7 @@ class TicketRepository:
 
         return session.get(SupportTicket, ticket_id)
 
- 
-
     @staticmethod
-
     def get_for_customer(
 
         session: Session,
@@ -302,18 +256,65 @@ class TicketRepository:
 
         )
 
- 
-
         return list(session.scalars(statement).all())
 
- 
+    @staticmethod
+    def create(
 
- 
+        session: Session,
+
+        *,
+
+        ticket_id: str,
+
+        customer_id: str,
+
+        order_id: Optional[str],
+
+        issue_type: str,
+
+        priority: str,
+
+        status: str,
+
+        created_at,
+
+        last_updated,
+
+        summary: str,
+
+    ) -> SupportTicket:
+
+        ticket = SupportTicket(
+
+            ticket_id=ticket_id,
+
+            customer_id=customer_id,
+
+            order_id=order_id,
+
+            issue_type=issue_type,
+
+            priority=priority,
+
+            status=status,
+
+            created_at=created_at,
+
+            last_updated=last_updated,
+
+            summary=summary,
+
+        )
+
+        session.add(ticket)
+
+        return ticket
+
 
 class AuditRepository:
 
     @staticmethod
-
     def record(
 
         session: Session,
@@ -335,12 +336,11 @@ class AuditRepository:
         details: Optional[dict[str, Any]] = None,
 
     ) -> AuditLog:
-
         """
 
         Store only redacted metadata in `details`.
 
- 
+
 
         Do not store raw prompts, access tokens, full tool responses,
 
@@ -370,9 +370,6 @@ class AuditRepository:
 
         )
 
- 
-
         session.add(event)
 
         return event
-

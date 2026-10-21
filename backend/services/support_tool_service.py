@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from backend.security.authorization import has_permission
 from typing import Any, Optional
+from datetime import datetime, timezone
+from uuid import uuid4
+
+from backend.services.support_workflow import SupportWorkflowClassifier
 
 
 from sqlalchemy.orm import Session
@@ -1043,4 +1047,734 @@ class SupportToolService:
                 "status": "success",
 
                 "data": result,
+            }
+
+    def classify_support_request(
+
+        self,
+
+        message: str,
+
+    ) -> dict[str, Any]:
+
+        message = message.strip()
+
+ 
+
+        if not message:
+
+            return {
+
+                "status": "error",
+
+                "message": "Support message cannot be empty.",
+
+            }
+
+ 
+
+        with SessionLocal() as session:
+
+            actor = self._get_actor(session)
+
+ 
+
+            if actor is None:
+
+                self._record_audit(
+
+                    session,
+
+                    actor=None,
+
+                    action="classify_support_request",
+
+                    resource_type="support_request",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="INVALID_OR_INACTIVE_IDENTITY",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to classify this request.",
+
+                }
+
+ 
+
+            if not self._has_permission(
+
+                actor,
+
+                "classify_support_request",
+
+            ):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="classify_support_request",
+
+                    resource_type="support_request",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to classify this request.",
+
+                }
+
+ 
+
+            classifier = SupportWorkflowClassifier()
+
+            classification = classifier.classify(message)
+
+ 
+
+            self._record_audit(
+
+                session,
+
+                actor=actor,
+
+                action="classify_support_request",
+
+                resource_type="support_request",
+
+                resource_id=None,
+
+                outcome="allowed",
+
+                reason_code="AUTHORIZED",
+
+            )
+
+            session.commit()
+
+ 
+
+            return {
+
+                "status": "success",
+
+                "data": classification,
+
+            }
+
+ 
+
+    def decide_escalation(
+
+        self,
+
+        message: str,
+
+        issue_type: str,
+
+        priority: str,
+
+        sentiment: str,
+
+    ) -> dict[str, Any]:
+
+        message = message.strip()
+
+        issue_type = issue_type.strip()
+
+        priority = priority.strip().lower()
+
+        sentiment = sentiment.strip().lower()
+
+ 
+
+        with SessionLocal() as session:
+
+            actor = self._get_actor(session)
+
+ 
+
+            if actor is None:
+
+                self._record_audit(
+
+                    session,
+
+                    actor=None,
+
+                    action="decide_escalation",
+
+                    resource_type="support_request",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="INVALID_OR_INACTIVE_IDENTITY",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to evaluate escalation.",
+
+                }
+
+ 
+
+            if not self._has_permission(
+
+                actor,
+
+                "decide_escalation",
+
+            ):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="decide_escalation",
+
+                    resource_type="support_request",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to evaluate escalation.",
+
+                }
+
+ 
+
+            classifier = SupportWorkflowClassifier()
+
+ 
+
+            decision = classifier.decide_escalation(
+
+                message=message,
+
+                issue_type=issue_type,
+
+                priority=priority,
+
+                sentiment=sentiment,
+
+            )
+
+ 
+
+            safe_decision = {
+
+                "should_escalate": decision["should_escalate"],
+
+                "recommended_status": decision["recommended_status"],
+
+                "reasons": decision["reasons"],
+
+            }
+
+ 
+
+            self._record_audit(
+
+                session,
+
+                actor=actor,
+
+                action="decide_escalation",
+
+                resource_type="support_request",
+
+                resource_id=None,
+
+                outcome="allowed",
+
+                reason_code="AUTHORIZED",
+
+            )
+
+            session.commit()
+
+ 
+
+            return {
+
+                "status": "success",
+
+                "data": safe_decision,
+
+            }
+
+ 
+
+    def create_support_ticket(
+
+        self,
+
+        summary: str,
+
+        issue_type: str,
+
+        priority: str,
+
+        order_id: str | None = None,
+
+        customer_id: str | None = None,
+
+        escalate: bool = False,
+
+    ) -> dict[str, Any]:
+
+        summary = summary.strip()
+
+        issue_type = issue_type.strip().lower()
+
+        priority = priority.strip().lower()
+
+ 
+
+        order_id = (
+
+            order_id.strip().upper()
+
+            if order_id and order_id.strip()
+
+            else None
+
+        )
+
+ 
+
+        requested_customer_id = (
+
+            customer_id.strip().upper()
+
+            if customer_id and customer_id.strip()
+
+            else None
+
+        )
+
+ 
+
+        if not summary:
+
+            return {
+
+                "status": "error",
+
+                "message": "Ticket summary cannot be empty.",
+
+            }
+
+ 
+
+        if priority not in {"low", "medium", "high"}:
+
+            return {
+
+                "status": "error",
+
+                "message": "Priority must be low, medium, or high.",
+
+            }
+
+ 
+
+        with SessionLocal() as session:
+
+            actor = self._get_actor(session)
+
+ 
+
+            if actor is None:
+
+                self._record_audit(
+
+                    session,
+
+                    actor=None,
+
+                    action="create_support_ticket",
+
+                    resource_type="ticket",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="INVALID_OR_INACTIVE_IDENTITY",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to create a support ticket.",
+
+                }
+
+ 
+
+            if not self._has_permission(
+
+                actor,
+
+                "create_support_ticket",
+
+            ):
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="create_support_ticket",
+
+                    resource_type="ticket",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to create a support ticket.",
+
+                }
+
+ 
+
+            if actor.role == "customer":
+
+                resolved_customer_id = actor.customer_id
+
+ 
+
+                if resolved_customer_id is None:
+
+                    self._record_audit(
+
+                        session,
+
+                        actor=actor,
+
+                        action="create_support_ticket",
+
+                        resource_type="ticket",
+
+                        resource_id=None,
+
+                        outcome="denied",
+
+                        reason_code="CUSTOMER_ID_MISSING",
+
+                    )
+
+                    session.commit()
+
+ 
+
+                    return {
+
+                        "status": "denied",
+
+                        "message": "Unable to create a support ticket.",
+
+                    }
+
+ 
+
+            elif actor.role in STAFF_DATA_ROLES:
+
+                if not requested_customer_id:
+
+                    self._record_audit(
+
+                        session,
+
+                        actor=actor,
+
+                        action="create_support_ticket",
+
+                        resource_type="ticket",
+
+                        resource_id=None,
+
+                        outcome="denied",
+
+                        reason_code="CUSTOMER_ID_REQUIRED_FOR_STAFF",
+
+                    )
+
+                    session.commit()
+
+ 
+
+                    return {
+
+                        "status": "error",
+
+                        "message": (
+
+                            "customer_id is required when staff create "
+
+                            "a ticket for a customer."
+
+                        ),
+
+                    }
+
+ 
+
+                resolved_customer_id = requested_customer_id
+
+ 
+
+            else:
+
+                self._record_audit(
+
+                    session,
+
+                    actor=actor,
+
+                    action="create_support_ticket",
+
+                    resource_type="ticket",
+
+                    resource_id=None,
+
+                    outcome="denied",
+
+                    reason_code="ROLE_PERMISSION_DENIED",
+
+                )
+
+                session.commit()
+
+ 
+
+                return {
+
+                    "status": "denied",
+
+                    "message": "Unable to create a support ticket.",
+
+                }
+
+ 
+
+            if order_id:
+
+                order = OrderRepository.get_by_id(
+
+                    session,
+
+                    order_id,
+
+                )
+
+ 
+
+                if (
+
+                    order is None
+
+                    or order.customer_id != resolved_customer_id
+
+                ):
+
+                    self._record_audit(
+
+                        session,
+
+                        actor=actor,
+
+                        action="create_support_ticket",
+
+                        resource_type="ticket",
+
+                        resource_id=None,
+
+                        outcome="denied",
+
+                        reason_code="ORDER_NOT_FOUND_OR_NOT_AUTHORIZED",
+
+                    )
+
+                    session.commit()
+
+ 
+
+                    return {
+
+                        "status": "denied",
+
+                        "message": (
+
+                            "Unable to create a support ticket for "
+
+                            "that order."
+
+                        ),
+
+                    }
+
+ 
+
+            status = "escalated" if escalate else "open"
+
+            now = datetime.now(timezone.utc)
+
+            ticket_id = f"TICK-{uuid4().hex[:8].upper()}"
+
+ 
+
+            ticket = TicketRepository.create(
+
+                session,
+
+                ticket_id=ticket_id,
+
+                customer_id=resolved_customer_id,
+
+                order_id=order_id,
+
+                issue_type=issue_type,
+
+                priority=priority,
+
+                status=status,
+
+                created_at=now,
+
+                last_updated=now,
+
+                summary=summary[:1000],
+
+            )
+
+ 
+
+            self._record_audit(
+
+                session,
+
+                actor=actor,
+
+                action="create_support_ticket",
+
+                resource_type="ticket",
+
+                resource_id=ticket.ticket_id,
+
+                outcome="allowed",
+
+                reason_code="AUTHORIZED",
+
+            )
+
+ 
+
+            session.commit()
+
+ 
+
+            response_data: dict[str, Any] = {
+
+                "ticket_id": ticket.ticket_id,
+
+                "issue_type": ticket.issue_type,
+
+                "priority": ticket.priority,
+
+                "status": ticket.status,
+
+                "order_id": ticket.order_id,
+
+                "created_at": ticket.created_at.isoformat(),
+
+            }
+
+ 
+
+            if actor.role in STAFF_DATA_ROLES:
+
+                response_data["customer_id"] = ticket.customer_id
+
+ 
+
+            return {
+
+                "status": "success",
+
+                "data": response_data,
+
             }

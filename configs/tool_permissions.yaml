@@ -91,3 +91,37 @@ permissions:
       - supervisor
 
       - app_admin
+
+  classify_support_request:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  decide_escalation:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor
+
+ 
+
+  create_support_ticket:
+
+    allowed_roles:
+
+      - customer
+
+      - support_agent
+
+      - supervisor

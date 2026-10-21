@@ -1,0 +1,175 @@
+priority_rules:
+
+  high_keywords:
+
+    - third time
+
+    - multiple times
+
+    - nobody helped
+
+    - chargeback
+
+    - legal action
+
+    - lost package
+
+    - not updated
+
+    - refund issue
+
+    - urgent
+
+    - very frustrated
+
+ 
+
+  medium_keywords:
+
+    - damaged
+
+    - defective
+
+    - missing item
+
+    - wrong item
+
+    - warranty
+
+    - replacement
+
+    - not working
+
+ 
+
+  low_keywords:
+
+    - invoice
+
+    - password
+
+    - general question
+
+    - shipping time
+
+    - policy
+
+ 
+
+issue_type_keywords:
+
+  refund:
+
+    - refund
+
+    - money back
+
+    - payment reversal
+
+ 
+
+  damaged_item:
+
+    - damaged
+
+    - broken
+
+    - arrived damaged
+
+ 
+
+  lost_package:
+
+    - lost package
+
+    - tracking not updated
+
+    - not received
+
+    - delivered but not received
+
+ 
+
+  warranty_claim:
+
+    - warranty
+
+    - defective
+
+    - stopped working
+
+ 
+
+  order_status:
+
+    - where is my order
+
+    - order status
+
+    - tracking
+
+ 
+
+  cancellation:
+
+    - cancel
+
+    - cancellation
+
+ 
+
+  billing:
+
+    - billing
+
+    - payment
+
+    - declined
+
+    - invoice
+
+ 
+
+  troubleshooting:
+
+    - not working
+
+    - bluetooth
+
+    - charging
+
+    - turn on
+
+    - connection
+
+ 
+
+escalation_rules:
+
+  escalate_if_priority:
+
+    - high
+
+ 
+
+  escalate_if_issue_type:
+
+    - lost_package
+
+    - warranty_claim
+
+ 
+
+  escalate_if_keywords:
+
+    - third time
+
+    - nobody helped
+
+    - chargeback
+
+    - legal action
+
+    - supervisor
+
+    - unresolved

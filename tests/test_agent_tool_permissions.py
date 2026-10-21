@@ -74,6 +74,9 @@ def test_customer_tool_visibility() -> None:
         "get_product_details",
 
         "get_ticket_status",
+        "classfy_support_request",
+        "decide_escalation",    
+        "create_support_ticket",
 
     }
 

@@ -121,6 +121,92 @@ def get_ticket_status(
 
     return get_service().get_ticket_status(ticket_id)
 
+@mcp.tool()
+
+def classify_support_request(
+
+    message: str,
+
+) -> dict[str, Any]:
+
+    """Classify a support message into issue type, priority, and sentiment."""
+
+    return get_service().classify_support_request(message)
+
+ 
+
+ 
+
+@mcp.tool()
+
+def decide_escalation(
+
+    message: str,
+
+    issue_type: str,
+
+    priority: str,
+
+    sentiment: str,
+
+) -> dict[str, Any]:
+
+    """Decide whether a support request should be escalated."""
+
+    return get_service().decide_escalation(
+
+        message=message,
+
+        issue_type=issue_type,
+
+        priority=priority,
+
+        sentiment=sentiment,
+
+    )
+
+ 
+
+ 
+
+@mcp.tool()
+
+def create_support_ticket(
+
+    summary: str,
+
+    issue_type: str,
+
+    priority: str,
+
+    order_id: str | None = None,
+
+    customer_id: str | None = None,
+
+    escalate: bool = False,
+
+) -> dict[str, Any]:
+
+    """Create an authorized support ticket."""
+
+    return get_service().create_support_ticket(
+
+        summary=summary,
+
+        issue_type=issue_type,
+
+        priority=priority,
+
+        order_id=order_id,
+
+        customer_id=customer_id,
+
+        escalate=escalate,
+
+    )
+
+
+
 
 if __name__ == "__main__":
 
